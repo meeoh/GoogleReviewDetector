@@ -239,11 +239,18 @@
   }
 
   function scrapeReviews() {
-    const reviewEls = document.querySelectorAll('[data-review-id]');
+    // Use the top-level review container (jftiEf) to avoid duplicates —
+    // Google Maps nests the same data-review-id on multiple child elements
+    const reviewEls = document.querySelectorAll('div.jftiEf[data-review-id]');
+    const seen = new Set();
     const reviews = [];
 
     for (const el of reviewEls) {
       try {
+        const reviewId = el.getAttribute("data-review-id");
+        if (seen.has(reviewId)) continue;
+        seen.add(reviewId);
+
         const nameEl = el.querySelector('.d4r55') || el.querySelector('button[data-review-id] div.WNxzHc');
         const reviewerName = nameEl?.textContent?.trim() || "Unknown";
 
@@ -552,26 +559,52 @@ Be well-calibrated. Most reviews ARE genuine. Only flag reviews with clear suspi
 
     badge.appendChild(tooltip);
 
-    // Toggle tooltip on click
+    // Toggle tooltip on click — position it fixed near the badge
     badge.addEventListener("click", (e) => {
       e.stopPropagation();
       document.querySelectorAll(".rd-tooltip.rd-show").forEach((t) => {
         if (t !== tooltip) t.classList.remove("rd-show");
       });
+
+      if (!tooltip.classList.contains("rd-show")) {
+        // Position the tooltip near the badge
+        const rect = badge.getBoundingClientRect();
+        let top = rect.bottom + 6;
+        let left = rect.left;
+
+        // Keep within viewport
+        if (left + 340 > window.innerWidth) left = window.innerWidth - 350;
+        if (left < 10) left = 10;
+        if (top + 300 > window.innerHeight) top = rect.top - 310;
+        if (top < 10) top = 10;
+
+        tooltip.style.top = `${top}px`;
+        tooltip.style.left = `${left}px`;
+      }
+
       tooltip.classList.toggle("rd-show");
     });
 
-    // Find the reviewer name row — be specific to avoid attaching to action buttons
-    const nameEl = el.querySelector('.d4r55');
-    if (nameEl) {
-      // Insert badge right after the name element
-      nameEl.parentElement.style.display = "flex";
-      nameEl.parentElement.style.alignItems = "center";
-      nameEl.parentElement.style.flexWrap = "wrap";
-      nameEl.insertAdjacentElement("afterend", badge);
+    // Insert badge below the reviewer info section, above the review content.
+    // Target the star rating row as an anchor point — badge goes right before it.
+    const starRow = el.querySelector('span.kvMYJc')?.closest('.DU9Pgb') ||
+                    el.querySelector('span.kvMYJc')?.parentElement;
+    if (starRow) {
+      starRow.insertAdjacentElement("beforebegin", badge);
     } else {
-      // Fallback: insert as first child of the review container itself
-      el.insertAdjacentElement("afterbegin", badge);
+      // Fallback: insert after the reviewer name
+      const nameEl = el.querySelector('.d4r55');
+      if (nameEl) {
+        // Go up to the header container and insert after it
+        const headerContainer = nameEl.closest('.jJc9Ad') || nameEl.parentElement?.parentElement;
+        if (headerContainer) {
+          headerContainer.insertAdjacentElement("afterend", badge);
+        } else {
+          nameEl.insertAdjacentElement("afterend", badge);
+        }
+      } else {
+        el.insertAdjacentElement("afterbegin", badge);
+      }
     }
   }
 
@@ -638,6 +671,12 @@ Be well-calibrated. Most reviews ARE genuine. Only flag reviews with clear suspi
       </div>`;
     }).join("");
 
+    // Flagged reviews — sorted by score, only non-genuine
+    const flagged = analyses
+      .filter((a) => a.score >= 0.20)
+      .sort((a, b) => b.score - a.score)
+      .slice(0, 20);
+
     const panel = document.createElement("div");
     panel.className = "rd-summary-panel";
     panel.innerHTML = `
@@ -687,15 +726,57 @@ Be well-calibrated. Most reviews ARE genuine. Only flag reviews with clear suspi
         <span style="font-weight:700; color:${getScoreColor(maxScore)}">${Math.round(maxScore * 100)}%</span>
       </div>
 
+      ${flagged.length > 0 ? `
+      <div style="margin-top:10px; padding-top:8px; border-top:1px solid #333;">
+        <div style="font-size:11px; font-weight:600; color:#888; margin-bottom:8px; text-transform:uppercase; letter-spacing:0.5px;">🚩 Flagged Reviews (top ${flagged.length})</div>
+        <div class="rd-flagged-list" style="max-height:200px; overflow-y:auto;"></div>
+      </div>
+      ` : ''}
+
       <div style="margin-top:10px; padding-top:8px; border-top:1px solid #333;">
         ${aiLine}
-      </div>
-      <div style="margin-top: 8px; font-size: 11px; color: #555; text-align: center;">
-        Click any badge on a review for details
       </div>
     `;
 
     panel.querySelector(".rd-close-btn").addEventListener("click", () => panel.remove());
+
+    // Build clickable flagged review list
+    const listContainer = panel.querySelector(".rd-flagged-list");
+    if (listContainer && flagged.length > 0) {
+      for (const a of flagged) {
+        const row = document.createElement("div");
+        row.className = "rd-flagged-row";
+        row.style.cssText = "display:flex; align-items:center; gap:8px; padding:6px 4px; border-radius:6px; cursor:pointer; transition:background 0.15s; font-size:11px;";
+
+        const scoreColor = getScoreColor(a.score);
+        const textPreview = a.review.text
+          ? (a.review.text.length > 50 ? a.review.text.slice(0, 50) + "…" : a.review.text)
+          : "(no text)";
+
+        row.innerHTML = `
+          <span style="font-weight:800; color:${scoreColor}; min-width:32px;">${Math.round(a.score * 100)}%</span>
+          <span style="color:#fff; font-weight:600; min-width:60px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${a.review.reviewerName}</span>
+          <span style="color:#888; flex:1; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${textPreview}</span>
+          <span style="color:#555;">→</span>
+        `;
+
+        row.addEventListener("mouseenter", () => { row.style.background = "rgba(255,255,255,0.05)"; });
+        row.addEventListener("mouseleave", () => { row.style.background = "none"; });
+        row.addEventListener("click", () => {
+          a.review.element.scrollIntoView({ behavior: "smooth", block: "center" });
+          // Flash highlight
+          a.review.element.style.transition = "outline 0.2s";
+          a.review.element.style.outline = `2px solid ${scoreColor}`;
+          a.review.element.style.outlineOffset = "4px";
+          setTimeout(() => {
+            a.review.element.style.outline = "none";
+          }, 2000);
+        });
+
+        listContainer.appendChild(row);
+      }
+    }
+
     document.body.appendChild(panel);
   }
 
