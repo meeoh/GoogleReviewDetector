@@ -191,26 +191,47 @@
   // ----------------------------------------------------------
 
   function getBusinessInfo() {
+    // Business name — try multiple selectors used across Google Maps layouts
     const nameEl =
       document.querySelector('h1.DUwDvf') ||
+      document.querySelector('h1.fontHeadlineLarge') ||
       document.querySelector('[data-attrid="title"]') ||
+      document.querySelector('div[role="main"] h1') ||
       document.querySelector('h1');
-    const name = nameEl?.textContent?.trim() || "Unknown Business";
+    let name = nameEl?.textContent?.trim() || "";
 
+    // Fallback: try to extract from page title ("Business Name - Google Maps")
+    if (!name) {
+      const titleMatch = document.title.match(/^(.+?)\s*[-–—]\s*Google/i);
+      name = titleMatch ? titleMatch[1].trim() : "Unknown Business";
+    }
+
+    // Average rating — try multiple selectors
     const ratingEl =
       document.querySelector('div.F7nice span[aria-hidden="true"]') ||
       document.querySelector('span.ceNzKf') ||
-      document.querySelector('span[role="img"]');
+      document.querySelector('div.fontDisplayLarge') ||
+      document.querySelector('span[role="img"][aria-label*="star"]');
     let avgRating = null;
     if (ratingEl) {
-      const match = ratingEl.textContent?.match(/([\d.]+)/);
+      const ratingText = ratingEl.getAttribute("aria-label") || ratingEl.textContent || "";
+      const match = ratingText.match(/([\d.]+)/);
       if (match) avgRating = parseFloat(match[1]);
     }
 
-    const reviewCountEl = document.querySelector('span[aria-label*="reviews"]');
+    // Total review count
     let totalReviews = null;
+    const reviewCountEl =
+      document.querySelector('span[aria-label*="reviews"]') ||
+      document.querySelector('span[aria-label*="review"]');
     if (reviewCountEl) {
-      const match = reviewCountEl.textContent?.match(/([\d,]+)/);
+      const match = (reviewCountEl.getAttribute("aria-label") || reviewCountEl.textContent || "").match(/([\d,]+)/);
+      if (match) totalReviews = parseInt(match[1].replace(/,/g, ""));
+    }
+    // Fallback: look for "(X)" pattern near the rating
+    if (!totalReviews) {
+      const parentText = ratingEl?.closest?.("div")?.parentElement?.textContent || "";
+      const match = parentText.match(/\(([\d,]+)\)/);
       if (match) totalReviews = parseInt(match[1].replace(/,/g, ""));
     }
 
@@ -463,7 +484,7 @@ Be well-calibrated. Most reviews ARE genuine. Only flag reviews with clear suspi
   function injectBadge(review, analysis) {
     const el = review.element;
     // Remove old badge if re-running
-    el.querySelector(".rd-badge")?.remove();
+    el.querySelectorAll(".rd-badge").forEach((b) => b.remove());
 
     const badge = document.createElement("span");
     badge.className = `rd-badge ${getBadgeClass(analysis.verdict)}`;
@@ -540,14 +561,17 @@ Be well-calibrated. Most reviews ARE genuine. Only flag reviews with clear suspi
       tooltip.classList.toggle("rd-show");
     });
 
-    const nameRow = el.querySelector('.d4r55')?.parentElement || el.firstElementChild;
-    if (nameRow) {
-      nameRow.style.display = "flex";
-      nameRow.style.alignItems = "center";
-      nameRow.style.flexWrap = "wrap";
-      nameRow.appendChild(badge);
+    // Find the reviewer name row — be specific to avoid attaching to action buttons
+    const nameEl = el.querySelector('.d4r55');
+    if (nameEl) {
+      // Insert badge right after the name element
+      nameEl.parentElement.style.display = "flex";
+      nameEl.parentElement.style.alignItems = "center";
+      nameEl.parentElement.style.flexWrap = "wrap";
+      nameEl.insertAdjacentElement("afterend", badge);
     } else {
-      el.prepend(badge);
+      // Fallback: insert as first child of the review container itself
+      el.insertAdjacentElement("afterbegin", badge);
     }
   }
 
@@ -559,43 +583,114 @@ Be well-calibrated. Most reviews ARE genuine. Only flag reviews with clear suspi
     document.querySelector(".rd-summary-panel")?.remove();
 
     const total = analyses.length;
-    const fakeCount = analyses.filter((a) => a.verdict.includes("FAKE")).length;
+    const veryFakeCount = analyses.filter((a) => a.verdict === "VERY LIKELY FAKE").length;
+    const likelyFakeCount = analyses.filter((a) => a.verdict === "LIKELY FAKE").length;
+    const fakeCount = veryFakeCount + likelyFakeCount;
     const suspCount = analyses.filter((a) => a.verdict === "SUSPICIOUS").length;
-    const genuineCount = total - fakeCount - suspCount;
+    const slightCount = analyses.filter((a) => a.verdict === "SLIGHTLY SUSPICIOUS").length;
+    const genuineCount = analyses.filter((a) => a.verdict === "LIKELY GENUINE").length;
     const avgScore = (analyses.reduce((s, a) => s + a.score, 0) / total) || 0;
+    const maxScore = Math.max(...analyses.map((a) => a.score));
+
+    // Rating distribution
+    const ratingCounts = [0, 0, 0, 0, 0];
+    for (const a of analyses) {
+      if (a.review.rating >= 1 && a.review.rating <= 5) ratingCounts[a.review.rating - 1]++;
+    }
+
+    // Top triggered signals across all reviews
+    const signalHits = {};
+    for (const a of analyses) {
+      for (const s of a.signals) {
+        if (s.score > 0) {
+          signalHits[s.name] = (signalHits[s.name] || 0) + 1;
+        }
+      }
+    }
+    const topSignals = Object.entries(signalHits)
+      .sort((a, b) => b[1] - a[1])
+      .slice(0, 5);
 
     const aiLine = aiEnabled
-      ? `<div style="margin-top: 6px; font-size: 11px; color: #b388ff; display: flex; align-items: center; gap: 4px;">🤖 AI-enhanced analysis</div>`
-      : `<div style="margin-top: 6px; font-size: 11px; color: #666;">Heuristic-only mode</div>`;
+      ? `<div style="font-size: 11px; color: #b388ff; display: flex; align-items: center; gap: 4px;">🤖 AI-enhanced analysis</div>`
+      : `<div style="font-size: 11px; color: #666;">Heuristic-only mode</div>`;
+
+    // Build rating bar chart
+    const maxRating = Math.max(...ratingCounts, 1);
+    const ratingBars = ratingCounts.map((count, i) => {
+      const pct = Math.round((count / maxRating) * 100);
+      const stars = i + 1;
+      return `<div style="display:flex; align-items:center; gap:6px; font-size:11px;">
+        <span style="width:14px; color:#aaa;">${stars}★</span>
+        <div style="flex:1; height:6px; background:#222; border-radius:3px; overflow:hidden;">
+          <div style="width:${pct}%; height:100%; background:${stars >= 4 ? '#4caf50' : stars >= 3 ? '#ffeb3b' : '#f44336'}; border-radius:3px;"></div>
+        </div>
+        <span style="width:28px; text-align:right; color:#888;">${count}</span>
+      </div>`;
+    }).reverse().join("");
+
+    // Build top signals list
+    const signalsList = topSignals.map(([name, count]) => {
+      const pct = Math.round((count / total) * 100);
+      return `<div style="display:flex; justify-content:space-between; font-size:11px; padding:1px 0;">
+        <span style="color:#aaa;">${name.replace(/_/g, " ")}</span>
+        <span style="color:#e94560;">${count} (${pct}%)</span>
+      </div>`;
+    }).join("");
 
     const panel = document.createElement("div");
     panel.className = "rd-summary-panel";
     panel.innerHTML = `
       <button class="rd-close-btn" title="Close">✕</button>
       <h2>🕵️ Review Detective</h2>
-      <div style="margin-bottom: 8px; color: #aaa; font-size: 12px;">${bizInfo.name}</div>
-      <div class="rd-summary-stat">
-        <span>Reviews analyzed</span>
-        <span class="rd-summary-stat-value">${total}</span>
+      <div style="margin-bottom: 10px; color: #ccc; font-size: 13px; font-weight: 600;">${bizInfo.name}</div>
+      <div style="display:flex; gap:12px; margin-bottom:12px; padding-bottom:10px; border-bottom:1px solid #333;">
+        <div style="text-align:center; flex:1;">
+          <div style="font-size:22px; font-weight:800; color:#fff;">${total}</div>
+          <div style="font-size:10px; color:#888;">analyzed</div>
+        </div>
+        <div style="text-align:center; flex:1;">
+          <div style="font-size:22px; font-weight:800; color:${bizInfo.avgRating ? '#fff' : '#555'};">${bizInfo.avgRating ? bizInfo.avgRating.toFixed(1) + '★' : 'N/A'}</div>
+          <div style="font-size:10px; color:#888;">avg rating</div>
+        </div>
+        <div style="text-align:center; flex:1;">
+          <div style="font-size:22px; font-weight:800; color:${getScoreColor(avgScore)}">${Math.round(avgScore * 100)}%</div>
+          <div style="font-size:10px; color:#888;">avg fake</div>
+        </div>
       </div>
-      <div class="rd-summary-stat">
-        <span style="color:#f44336">🔴 Likely fake</span>
-        <span class="rd-summary-stat-value" style="color:#f44336">${fakeCount} (${total > 0 ? Math.round(fakeCount / total * 100) : 0}%)</span>
+
+      <div style="margin-bottom:10px;">
+        <div style="font-size:11px; font-weight:600; color:#888; margin-bottom:6px; text-transform:uppercase; letter-spacing:0.5px;">Verdict Breakdown</div>
+        ${veryFakeCount > 0 ? `<div class="rd-summary-stat"><span style="color:#d32f2f">🔴 Very likely fake</span><span class="rd-summary-stat-value" style="color:#d32f2f">${veryFakeCount}</span></div>` : ''}
+        ${likelyFakeCount > 0 ? `<div class="rd-summary-stat"><span style="color:#f44336">🔴 Likely fake</span><span class="rd-summary-stat-value" style="color:#f44336">${likelyFakeCount}</span></div>` : ''}
+        ${suspCount > 0 ? `<div class="rd-summary-stat"><span style="color:#ff9800">🟡 Suspicious</span><span class="rd-summary-stat-value" style="color:#ff9800">${suspCount}</span></div>` : ''}
+        ${slightCount > 0 ? `<div class="rd-summary-stat"><span style="color:#ffeb3b">🟡 Slightly suspicious</span><span class="rd-summary-stat-value" style="color:#ffeb3b">${slightCount}</span></div>` : ''}
+        <div class="rd-summary-stat"><span style="color:#4caf50">🟢 Likely genuine</span><span class="rd-summary-stat-value" style="color:#4caf50">${genuineCount}</span></div>
       </div>
-      <div class="rd-summary-stat">
-        <span style="color:#ff9800">🟡 Suspicious</span>
-        <span class="rd-summary-stat-value" style="color:#ff9800">${suspCount}</span>
+
+      <div style="margin-bottom:10px; padding-top:8px; border-top:1px solid #333;">
+        <div style="font-size:11px; font-weight:600; color:#888; margin-bottom:6px; text-transform:uppercase; letter-spacing:0.5px;">Rating Distribution</div>
+        <div style="display:flex; flex-direction:column; gap:3px;">
+          ${ratingBars}
+        </div>
       </div>
-      <div class="rd-summary-stat">
-        <span style="color:#4caf50">🟢 Likely genuine</span>
-        <span class="rd-summary-stat-value" style="color:#4caf50">${genuineCount}</span>
+
+      ${topSignals.length > 0 ? `
+      <div style="margin-bottom:10px; padding-top:8px; border-top:1px solid #333;">
+        <div style="font-size:11px; font-weight:600; color:#888; margin-bottom:6px; text-transform:uppercase; letter-spacing:0.5px;">Top Triggered Signals</div>
+        ${signalsList}
       </div>
-      <div class="rd-summary-stat" style="margin-top: 8px; padding-top: 8px; border-top: 1px solid #333;">
-        <span>Avg fake score</span>
-        <span class="rd-summary-stat-value" style="color:${getScoreColor(avgScore)}">${Math.round(avgScore * 100)}%</span>
+      ` : ''}
+
+      <div style="display:flex; justify-content:space-between; padding-top:8px; border-top:1px solid #333; font-size:11px;">
+        <span style="color:#888;">Highest fake score</span>
+        <span style="font-weight:700; color:${getScoreColor(maxScore)}">${Math.round(maxScore * 100)}%</span>
       </div>
-      ${aiLine}
-      <div style="margin-top: 8px; font-size: 11px; color: #666; text-align: center;">
+
+      <div style="margin-top:10px; padding-top:8px; border-top:1px solid #333;">
+        ${aiLine}
+      </div>
+      <div style="margin-top: 8px; font-size: 11px; color: #555; text-align: center;">
         Click any badge on a review for details
       </div>
     `;
