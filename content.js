@@ -958,13 +958,19 @@ Be well-calibrated. Most reviews ARE genuine. Only flag reviews with clear suspi
   }
 
   // ----------------------------------------------------------
-  // CLOSE TOOLTIPS ON OUTSIDE CLICK
+  // CLOSE TOOLTIPS ON OUTSIDE CLICK OR SCROLL
   // ----------------------------------------------------------
   document.addEventListener("click", (e) => {
     if (!e.target.closest(".rd-badge") && !e.target.closest(".rd-tooltip")) {
       document.querySelectorAll(".rd-tooltip.rd-show").forEach((t) => t.classList.remove("rd-show"));
     }
   });
+
+  // Close tooltips on any scroll (page or Google's review pane)
+  function closeAllTooltips() {
+    document.querySelectorAll(".rd-tooltip.rd-show").forEach((t) => t.classList.remove("rd-show"));
+  }
+  document.addEventListener("scroll", closeAllTooltips, true);
 
   // ----------------------------------------------------------
   // MESSAGE LISTENER (from popup)
