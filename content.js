@@ -394,7 +394,7 @@ Be well-calibrated. Most reviews ARE genuine. Only flag reviews with clear suspi
     }));
 
     // Batch into groups of 10 to stay within token limits
-    const BATCH_SIZE = 10;
+    const BATCH_SIZE = 50;
     const allResults = [];
 
     for (let start = 0; start < reviewData.length; start += BATCH_SIZE) {
@@ -419,7 +419,7 @@ Be well-calibrated. Most reviews ARE genuine. Only flag reviews with clear suspi
             ],
             response_format: { type: "json_object" },
             temperature: 0.2,
-            max_tokens: 1500,
+            max_tokens: 4000,
           }),
         });
 
