@@ -401,7 +401,7 @@ Be well-calibrated. Most reviews ARE genuine. Only flag reviews with clear suspi
     }));
 
     // Batch into groups of 10 to stay within token limits
-    const BATCH_SIZE = 50;
+    const BATCH_SIZE = 100;
     const allResults = [];
 
     for (let start = 0; start < reviewData.length; start += BATCH_SIZE) {
