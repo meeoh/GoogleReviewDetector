@@ -195,6 +195,27 @@
 @keyframes rd-spin {
   to { transform: rotate(360deg); }
 }
+.rd-stop-btn {
+  margin-left: 10px;
+  padding: 4px 12px;
+  border: 1px solid #e94560;
+  border-radius: 6px;
+  background: transparent;
+  color: #e94560;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s;
+  white-space: nowrap;
+}
+.rd-stop-btn:hover {
+  background: #e94560;
+  color: #fff;
+}
+.rd-stop-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
 
 /* AI section in tooltip */
 .rd-ai-section {

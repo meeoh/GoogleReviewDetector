@@ -747,14 +747,29 @@ Be well-calibrated. Most reviews ARE genuine. Only flag reviews with clear suspi
   // PROGRESS INDICATOR
   // ----------------------------------------------------------
 
-  function showProgress(text) {
+  // Cancellation flag for stopping scroll early
+  let _stopScrolling = false;
+
+  function showProgress(text, showStopBtn = false) {
     let el = document.querySelector(".rd-progress");
     if (!el) {
       el = document.createElement("div");
       el.className = "rd-progress";
       document.body.appendChild(el);
     }
-    el.innerHTML = `<div class="rd-spinner"></div><span>${text}</span>`;
+    el.innerHTML = `
+      <div class="rd-spinner"></div>
+      <span>${text}</span>
+      ${showStopBtn ? `<button class="rd-stop-btn">Stop & Analyze</button>` : ""}
+    `;
+    const stopBtn = el.querySelector(".rd-stop-btn");
+    if (stopBtn) {
+      stopBtn.addEventListener("click", () => {
+        _stopScrolling = true;
+        stopBtn.textContent = "Stopping...";
+        stopBtn.disabled = true;
+      });
+    }
     return el;
   }
 
@@ -781,9 +796,14 @@ Be well-calibrated. Most reviews ARE genuine. Only flag reviews with clear suspi
     let staleRounds = 0;
 
     for (let i = 0; i < maxScrolls; i++) {
-      showProgress(`Scrolling to load reviews... (${document.querySelectorAll('[data-review-id]').length} found)`);
+      if (_stopScrolling) break;
+
+      const count = document.querySelectorAll('[data-review-id]').length;
+      showProgress(`Scrolling to load reviews... (${count} found)`, true);
       scrollEl.scrollTop = scrollEl.scrollHeight;
       await sleep(1500);
+
+      if (_stopScrolling) break;
 
       document.querySelectorAll('button.w8nwRe').forEach((btn) => btn.click());
 
@@ -807,6 +827,9 @@ Be well-calibrated. Most reviews ARE genuine. Only flag reviews with clear suspi
   // ----------------------------------------------------------
 
   async function runAnalysis() {
+    // Reset cancellation flag
+    _stopScrolling = false;
+
     // Clean up previous run
     document.querySelectorAll(".rd-badge, .rd-summary-panel, .rd-tooltip").forEach((el) => el.remove());
     document.querySelectorAll(".rd-review-highlight-fake, .rd-review-highlight-suspicious").forEach((el) => {
