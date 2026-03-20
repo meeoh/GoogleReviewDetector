@@ -84,14 +84,7 @@
         return { score: 0.0, reason: `${review.rating}★ — moderate` };
       },
     },
-    {
-      name: "not_local_guide",
-      weight: 0.8,
-      fn: (review, _ctx) => {
-        if (review.isLocalGuide) return { score: 0.0, reason: "Local Guide — more trustworthy" };
-        return { score: 0.25, reason: "Not a Local Guide" };
-      },
-    },
+
     {
       name: "rating_vs_average",
       weight: 1.0,
