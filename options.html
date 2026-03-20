@@ -1,0 +1,233 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      width: 420px;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: #1a1a2e;
+      color: #e0e0e0;
+      padding: 20px;
+    }
+    h1 {
+      font-size: 16px;
+      color: #fff;
+      margin-bottom: 6px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .subtitle {
+      font-size: 12px;
+      color: #888;
+      margin-bottom: 20px;
+    }
+    .section {
+      background: #16213e;
+      border: 1px solid #0f3460;
+      border-radius: 10px;
+      padding: 16px;
+      margin-bottom: 16px;
+    }
+    .section h2 {
+      font-size: 13px;
+      color: #e94560;
+      margin-bottom: 4px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .section p {
+      font-size: 12px;
+      color: #999;
+      margin-bottom: 12px;
+      line-height: 1.5;
+    }
+    label {
+      display: block;
+      font-size: 12px;
+      font-weight: 600;
+      color: #ccc;
+      margin-bottom: 6px;
+    }
+    .input-row {
+      display: flex;
+      gap: 8px;
+    }
+    input[type="password"],
+    input[type="text"] {
+      flex: 1;
+      padding: 8px 12px;
+      border: 1px solid #333;
+      border-radius: 6px;
+      background: #0d1b2a;
+      color: #e0e0e0;
+      font-size: 13px;
+      font-family: monospace;
+      outline: none;
+      transition: border-color 0.2s;
+    }
+    input:focus {
+      border-color: #e94560;
+    }
+    .toggle-vis {
+      background: none;
+      border: 1px solid #333;
+      border-radius: 6px;
+      color: #888;
+      cursor: pointer;
+      padding: 0 10px;
+      font-size: 14px;
+    }
+    .toggle-vis:hover { color: #e0e0e0; border-color: #555; }
+    .btn-row {
+      display: flex;
+      gap: 8px;
+      margin-top: 12px;
+    }
+    .btn {
+      padding: 8px 16px;
+      border: none;
+      border-radius: 6px;
+      font-size: 12px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+    .btn-primary {
+      background: #e94560;
+      color: #fff;
+    }
+    .btn-primary:hover { background: #c81e45; }
+    .btn-danger {
+      background: transparent;
+      color: #f44336;
+      border: 1px solid #f44336;
+    }
+    .btn-danger:hover { background: rgba(244, 67, 54, 0.1); }
+    .btn-test {
+      background: transparent;
+      color: #4caf50;
+      border: 1px solid #4caf50;
+    }
+    .btn-test:hover { background: rgba(76, 175, 80, 0.1); }
+    .msg {
+      margin-top: 10px;
+      padding: 8px 12px;
+      border-radius: 6px;
+      font-size: 12px;
+      display: none;
+    }
+    .msg.success {
+      display: block;
+      background: rgba(76, 175, 80, 0.1);
+      border: 1px solid #4caf50;
+      color: #4caf50;
+    }
+    .msg.error {
+      display: block;
+      background: rgba(244, 67, 54, 0.1);
+      border: 1px solid #f44336;
+      color: #f44336;
+    }
+    .msg.info {
+      display: block;
+      background: rgba(33, 150, 243, 0.1);
+      border: 1px solid #2196f3;
+      color: #2196f3;
+    }
+    .option-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 8px 0;
+    }
+    .option-row + .option-row {
+      border-top: 1px solid #1a1a2e;
+    }
+    .option-label {
+      font-size: 12px;
+    }
+    .option-desc {
+      font-size: 11px;
+      color: #777;
+    }
+    select {
+      padding: 6px 10px;
+      border: 1px solid #333;
+      border-radius: 6px;
+      background: #0d1b2a;
+      color: #e0e0e0;
+      font-size: 12px;
+      outline: none;
+    }
+    select:focus { border-color: #e94560; }
+    input[type="range"] {
+      width: 100px;
+      accent-color: #e94560;
+    }
+    .range-val {
+      font-size: 12px;
+      color: #e94560;
+      font-weight: 600;
+      min-width: 30px;
+      text-align: right;
+    }
+  </style>
+</head>
+<body>
+  <h1>🕵️ Review Detective Settings</h1>
+  <p class="subtitle">Configure AI-powered analysis for deeper fake review detection</p>
+
+  <!-- API Key Section -->
+  <div class="section">
+    <h2>🤖 AI Analysis (Optional)</h2>
+    <p>
+      Paste an OpenAI API key to enable AI-powered analysis. Suspicious reviews will be
+      sent to the AI for a second opinion on authenticity. Without a key, the extension
+      uses heuristic-only detection which still works great.
+    </p>
+    <label for="apiKey">OpenAI API Key</label>
+    <div class="input-row">
+      <input type="password" id="apiKey" placeholder="sk-..." autocomplete="off" spellcheck="false">
+      <button class="toggle-vis" id="toggleVis" title="Show/hide key">👁</button>
+    </div>
+    <div class="btn-row">
+      <button class="btn btn-primary" id="saveBtn">Save Key</button>
+      <button class="btn btn-test" id="testBtn">Test Key</button>
+      <button class="btn btn-danger" id="deleteBtn">Remove Key</button>
+    </div>
+    <div class="msg" id="msg"></div>
+  </div>
+
+  <!-- AI Options -->
+  <div class="section">
+    <h2>⚙️ AI Options</h2>
+    <div class="option-row">
+      <div>
+        <div class="option-label">Model</div>
+        <div class="option-desc">Which OpenAI model to use</div>
+      </div>
+      <select id="model">
+        <option value="gpt-4.1-nano">GPT-4.1 Nano (cheapest)</option>
+        <option value="gpt-4.1-mini">GPT-4.1 Mini (balanced)</option>
+        <option value="gpt-4.1">GPT-4.1 (best accuracy)</option>
+      </select>
+    </div>
+    <div class="option-row">
+      <div>
+        <div class="option-label">AI Threshold</div>
+        <div class="option-desc">Only send reviews above this heuristic score to AI</div>
+      </div>
+      <div style="display:flex; align-items:center; gap:8px;">
+        <input type="range" id="threshold" min="10" max="70" value="30" step="5">
+        <span class="range-val" id="thresholdVal">30%</span>
+      </div>
+    </div>
+  </div>
+
+  <script src="options.js"></script>
+</body>
+</html>

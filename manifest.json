@@ -1,0 +1,37 @@
+{
+  "manifest_version": 3,
+  "name": "Review Detective",
+  "version": "1.1.0",
+  "description": "Detect fake and bot reviews on Google Maps business listings",
+  "permissions": ["activeTab", "storage"],
+  "host_permissions": [
+    "https://api.openai.com/*"
+  ],
+  "icons": {
+    "16": "icons/icon16.png",
+    "48": "icons/icon48.png",
+    "128": "icons/icon128.png"
+  },
+  "content_scripts": [
+    {
+      "matches": [
+        "https://www.google.com/maps/*",
+        "https://maps.google.com/*"
+      ],
+      "js": ["content.js"],
+      "css": ["content.css"],
+      "run_at": "document_idle"
+    }
+  ],
+  "options_ui": {
+    "page": "options.html",
+    "open_in_tab": false
+  },
+  "action": {
+    "default_popup": "popup.html",
+    "default_icon": {
+      "16": "icons/icon16.png",
+      "48": "icons/icon48.png"
+    }
+  }
+}
