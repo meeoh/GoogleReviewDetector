@@ -642,7 +642,7 @@ Be well-calibrated. Most reviews ARE genuine. Only flag reviews with clear suspi
     const slightCount = analyses.filter((a) => a.verdict === "SLIGHTLY SUSPICIOUS").length;
     const genuineCount = analyses.filter((a) => a.verdict === "LIKELY GENUINE").length;
     const avgScore = (analyses.reduce((s, a) => s + a.score, 0) / total) || 0;
-    const maxScore = Math.max(...analyses.map((a) => a.score));
+
 
     // Rating distribution
     const ratingCounts = [0, 0, 0, 0, 0];
@@ -716,10 +716,6 @@ Be well-calibrated. Most reviews ARE genuine. Only flag reviews with clear suspi
       </div>
 
 
-      <div style="display:flex; justify-content:space-between; padding-top:8px; border-top:1px solid #333; font-size:11px;">
-        <span style="color:#888;">Highest fake score</span>
-        <span style="font-weight:700; color:${getScoreColor(maxScore)}">${Math.round(maxScore * 100)}%</span>
-      </div>
 
       ${flagged.length > 0 ? `
       <div style="margin-top:10px; padding-top:8px; border-top:1px solid #333;">
