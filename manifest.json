@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "Review Detective",
-  "version": "1.1.0",
+  "version": "1.1.1",
   "description": "Detect fake and bot reviews on Google Maps business listings",
   "permissions": ["activeTab", "storage"],
   "host_permissions": [
