@@ -650,18 +650,7 @@ Be well-calibrated. Most reviews ARE genuine. Only flag reviews with clear suspi
       if (a.review.rating >= 1 && a.review.rating <= 5) ratingCounts[a.review.rating - 1]++;
     }
 
-    // Top triggered signals across all reviews
-    const signalHits = {};
-    for (const a of analyses) {
-      for (const s of a.signals) {
-        if (s.score > 0) {
-          signalHits[s.name] = (signalHits[s.name] || 0) + 1;
-        }
-      }
-    }
-    const topSignals = Object.entries(signalHits)
-      .sort((a, b) => b[1] - a[1])
-      .slice(0, 5);
+
 
     const aiLine = aiEnabled
       ? `<div style="font-size: 11px; color: #b388ff; display: flex; align-items: center; gap: 4px;">🤖 AI-enhanced analysis</div>`
@@ -681,14 +670,7 @@ Be well-calibrated. Most reviews ARE genuine. Only flag reviews with clear suspi
       </div>`;
     }).reverse().join("");
 
-    // Build top signals list
-    const signalsList = topSignals.map(([name, count]) => {
-      const pct = Math.round((count / total) * 100);
-      return `<div style="display:flex; justify-content:space-between; font-size:11px; padding:1px 0;">
-        <span style="color:#aaa;">${name.replace(/_/g, " ")}</span>
-        <span style="color:#e94560;">${count} (${pct}%)</span>
-      </div>`;
-    }).join("");
+
 
     // Flagged reviews — sorted by score, only non-genuine
     const flagged = analyses
@@ -733,12 +715,6 @@ Be well-calibrated. Most reviews ARE genuine. Only flag reviews with clear suspi
         </div>
       </div>
 
-      ${topSignals.length > 0 ? `
-      <div style="margin-bottom:10px; padding-top:8px; border-top:1px solid #333;">
-        <div style="font-size:11px; font-weight:600; color:#888; margin-bottom:6px; text-transform:uppercase; letter-spacing:0.5px;">Top Triggered Signals</div>
-        ${signalsList}
-      </div>
-      ` : ''}
 
       <div style="display:flex; justify-content:space-between; padding-top:8px; border-top:1px solid #333; font-size:11px;">
         <span style="color:#888;">Highest fake score</span>
