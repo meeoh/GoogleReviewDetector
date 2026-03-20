@@ -419,7 +419,7 @@ Be well-calibrated. Most reviews ARE genuine. Only flag reviews with clear suspi
             ],
             response_format: { type: "json_object" },
             temperature: 0.2,
-            max_tokens: 4000,
+
           }),
         });
 
