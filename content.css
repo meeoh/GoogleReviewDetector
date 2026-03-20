@@ -1,11 +1,9 @@
 /* ===== Review Detective Overlay Styles ===== */
 
 .rd-badge {
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-  padding: 4px 12px;
-  border-radius: 12px;
+  display: inline-block;
+  padding: 5px 12px;
+  border-radius: 10px;
   font-size: 11px;
   font-weight: 700;
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
@@ -15,11 +13,20 @@
   position: relative;
   z-index: 10;
   margin: 6px 0;
-  white-space: nowrap;
+  max-width: 400px;
 }
 .rd-badge:hover {
   transform: scale(1.02);
   box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+}
+.rd-badge-reason {
+  display: block;
+  font-size: 10px;
+  font-weight: 500;
+  opacity: 0.9;
+  margin-top: 1px;
+  white-space: normal;
+  line-height: 1.4;
 }
 .rd-badge-fake {
   background: #d32f2f;

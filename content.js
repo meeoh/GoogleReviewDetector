@@ -495,7 +495,18 @@ Be well-calibrated. Most reviews ARE genuine. Only flag reviews with clear suspi
 
     const badge = document.createElement("span");
     badge.className = `rd-badge ${getBadgeClass(analysis.verdict)}`;
-    badge.textContent = `🕵️ ${Math.round(analysis.score * 100)}% — ${analysis.verdict}`;
+    // Get the top reason(s) to display on the badge
+    const topReasons = analysis.signals
+      .filter((s) => s.score > 0)
+      .sort((a, b) => (b.score * b.weight) - (a.score * a.weight))
+      .slice(0, 2)
+      .map((s) => s.reason);
+    const reasonText = topReasons.length > 0 ? topReasons.join(" · ") : "";
+
+    badge.innerHTML = `
+      <span>🕵️ ${Math.round(analysis.score * 100)}% — ${analysis.verdict}</span>
+      ${reasonText && analysis.score >= 0.20 ? `<span class="rd-badge-reason">${reasonText}</span>` : ""}
+    `;
 
     // Highlight the review container
     el.classList.remove("rd-review-highlight-fake", "rd-review-highlight-suspicious");
