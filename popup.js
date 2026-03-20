@@ -31,7 +31,7 @@ document.addEventListener("DOMContentLoaded", async () => {
   // Check if we're on a Google Maps page
   const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
   const isGoogleMaps =
-    tab?.url?.includes("google.com/maps") ||
+    /google\.[a-z.]+\/maps/i.test(tab?.url || "") ||
     tab?.url?.includes("maps.google.com");
 
   if (isGoogleMaps) {
