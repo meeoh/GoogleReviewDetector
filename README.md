@@ -8,7 +8,7 @@ Navigate to any business on Google Maps, click the extension icon, and hit **"An
 
 1. **Auto-scroll** through the reviews panel to load as many reviews as possible
 2. **Scrape** all review data directly from the page (reviewer name, rating, text, reviewer stats, dates, etc.)
-3. **Run 12 detection signals** against each review to compute a fake probability score
+3. **Run 8 detection signals** against each review to compute a fake probability score
 4. **(Optional) Send suspicious reviews to an AI** for a second opinion — catches subtle fakes that heuristics miss
 5. **Annotate** each review with a color-coded badge showing the verdict
 6. **Show a summary panel** with overall statistics
@@ -19,18 +19,14 @@ Click any badge to see the detailed signal breakdown (and AI reasoning, if enabl
 
 | Signal | Weight | What It Checks |
 |--------|--------|----------------|
+| `duplicate_text` | 3.0× | Near-identical text across multiple reviews |
 | `low_review_count` | 2.0× | Reviewer has very few total reviews (throwaway account) |
 | `review_burst` | 2.0× | Many reviews posted in the same time window (coordinated attack) |
-| `duplicate_text` | 3.0× | Near-identical text across multiple reviews |
 | `short_text` | 1.5× | Empty or extremely short review text |
 | `generic_text` | 1.5× | Vague/templated phrases like "Great!" or "Excellent!" |
 | `suspicious_name` | 1.2× | Placeholder or suspiciously short reviewer names |
-| `no_photos` | 1.0× | Reviewer has never posted any photos |
 | `paid_keywords` | 1.0× | Phrases commonly found in paid/incentivized reviews |
 | `rating_vs_average` | 1.0× | Rating deviates significantly from business average |
-| `not_local_guide` | 0.8× | Reviewer is not a Google Local Guide |
-| `all_caps_text` | 0.6× | ALL CAPS text (often bot-generated) |
-| `extreme_rating` | 0.5× | 1★ or 5★ with no nuance |
 
 ## AI Analysis (Optional)
 
