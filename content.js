@@ -30,16 +30,7 @@
         return { score: 0.0, reason: `${n} reviews — established` };
       },
     },
-    {
-      name: "no_photos",
-      weight: 1.0,
-      fn: (review, _ctx) => {
-        const n = review.reviewerTotalPhotos;
-        if (n === null) return { score: 0.2, reason: "Photo count unknown" };
-        if (n === 0) return { score: 0.4, reason: "Never posted photos" };
-        return { score: 0.0, reason: `${n} photos posted` };
-      },
-    },
+
     {
       name: "short_text",
       weight: 1.5,
@@ -75,15 +66,7 @@
         return { score: 0.0, reason: "Text appears specific" };
       },
     },
-    {
-      name: "extreme_rating",
-      weight: 0.5,
-      fn: (review, _ctx) => {
-        if (review.rating === 5) return { score: 0.15, reason: "5★ — common in fake positive reviews" };
-        if (review.rating === 1) return { score: 0.15, reason: "1★ — common in fake negative reviews" };
-        return { score: 0.0, reason: `${review.rating}★ — moderate` };
-      },
-    },
+
 
     {
       name: "rating_vs_average",
@@ -165,18 +148,7 @@
         return { score: 0.0, reason: "Normal name" };
       },
     },
-    {
-      name: "all_caps_text",
-      weight: 0.6,
-      fn: (review, _ctx) => {
-        const text = (review.text || "").trim();
-        if (!text || text.length < 10) return { score: 0.0, reason: "N/A" };
-        const letters = text.replace(/[^a-zA-Z]/g, "");
-        if (letters.length > 5 && letters === letters.toUpperCase())
-          return { score: 0.5, reason: "ALL CAPS text — often bot-generated" };
-        return { score: 0.0, reason: "Normal casing" };
-      },
-    },
+
   ];
 
   // ----------------------------------------------------------
