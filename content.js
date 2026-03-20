@@ -561,7 +561,8 @@ Be well-calibrated. Most reviews ARE genuine. Only flag reviews with clear suspi
       tooltip.appendChild(footer);
     }
 
-    badge.appendChild(tooltip);
+    // Append tooltip to body so it's never clipped by overflow containers
+    document.body.appendChild(tooltip);
 
     // Toggle tooltip on click — position it fixed near the badge
     badge.addEventListener("click", (e) => {
@@ -573,14 +574,28 @@ Be well-calibrated. Most reviews ARE genuine. Only flag reviews with clear suspi
       if (!tooltip.classList.contains("rd-show")) {
         // Position the tooltip near the badge
         const rect = badge.getBoundingClientRect();
+        const tooltipWidth = 340;
+
+        // Temporarily show to measure height
+        tooltip.style.visibility = "hidden";
+        tooltip.classList.add("rd-show");
+        const tooltipHeight = tooltip.offsetHeight;
+        tooltip.classList.remove("rd-show");
+        tooltip.style.visibility = "";
+
         let top = rect.bottom + 6;
         let left = rect.left;
 
-        // Keep within viewport
-        if (left + 340 > window.innerWidth) left = window.innerWidth - 350;
-        if (left < 10) left = 10;
-        if (top + 300 > window.innerHeight) top = rect.top - 310;
+        // If tooltip would go below viewport, show it above the badge
+        if (top + tooltipHeight > window.innerHeight - 10) {
+          top = rect.top - tooltipHeight - 6;
+        }
+        // If still off-screen (above), just pin to top
         if (top < 10) top = 10;
+
+        // Keep horizontally within viewport
+        if (left + tooltipWidth > window.innerWidth - 10) left = window.innerWidth - tooltipWidth - 10;
+        if (left < 10) left = 10;
 
         tooltip.style.top = `${top}px`;
         tooltip.style.left = `${left}px`;
@@ -849,7 +864,7 @@ Be well-calibrated. Most reviews ARE genuine. Only flag reviews with clear suspi
 
   async function runAnalysis() {
     // Clean up previous run
-    document.querySelectorAll(".rd-badge, .rd-summary-panel").forEach((el) => el.remove());
+    document.querySelectorAll(".rd-badge, .rd-summary-panel, .rd-tooltip").forEach((el) => el.remove());
     document.querySelectorAll(".rd-review-highlight-fake, .rd-review-highlight-suspicious").forEach((el) => {
       el.classList.remove("rd-review-highlight-fake", "rd-review-highlight-suspicious");
     });
@@ -974,7 +989,7 @@ Be well-calibrated. Most reviews ARE genuine. Only flag reviews with clear suspi
   // CLOSE TOOLTIPS ON OUTSIDE CLICK
   // ----------------------------------------------------------
   document.addEventListener("click", (e) => {
-    if (!e.target.closest(".rd-badge")) {
+    if (!e.target.closest(".rd-badge") && !e.target.closest(".rd-tooltip")) {
       document.querySelectorAll(".rd-tooltip.rd-show").forEach((t) => t.classList.remove("rd-show"));
     }
   });
