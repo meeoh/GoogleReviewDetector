@@ -328,11 +328,11 @@
       return {
         apiKey: stored.openaiApiKey || null,
         model: stored.aiModel || "gpt-4.1-nano",
-        threshold: (stored.aiThreshold ?? 30) / 100, // convert from percentage
+        threshold: (stored.aiThreshold ?? 15) / 100, // convert from percentage
       };
     } catch (e) {
       console.warn("[Review Detective] Could not read AI settings:", e);
-      return { apiKey: null, model: "gpt-4.1-nano", threshold: 0.30 };
+      return { apiKey: null, model: "gpt-4.1-nano", threshold: 0.15 };
     }
   }
 
