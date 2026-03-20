@@ -798,7 +798,7 @@ Be well-calibrated. Most reviews ARE genuine. Only flag reviews with clear suspi
     for (let i = 0; i < maxScrolls; i++) {
       if (_stopScrolling) break;
 
-      const count = document.querySelectorAll('[data-review-id]').length;
+      const count = document.querySelectorAll('div.jftiEf[data-review-id]').length;
       showProgress(`Scrolling to load reviews... (${count} found)`, true);
       scrollEl.scrollTop = scrollEl.scrollHeight;
       await sleep(1500);
@@ -807,7 +807,7 @@ Be well-calibrated. Most reviews ARE genuine. Only flag reviews with clear suspi
 
       document.querySelectorAll('button.w8nwRe').forEach((btn) => btn.click());
 
-      const currentCount = document.querySelectorAll("[data-review-id]").length;
+      const currentCount = document.querySelectorAll("div.jftiEf[data-review-id]").length;
       if (currentCount === prevCount) {
         staleRounds++;
         if (staleRounds >= 3) break;
